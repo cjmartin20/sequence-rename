@@ -2,16 +2,10 @@
 # $# references the number of arguments given
 # -lt is less than
 
-echo "Now choose a common phrase to rename files by-"
-echo "For example you might want to choose all files in current directory that have \"GOPRO\" in the name. Leave Blank to skip common phrases. "
-echo "Enter common phrase (Press Enter to skip) :"
-#read commonPhrase 
-#sed -i 's/ /\\ /g' files.txt
+
 #you could use ~+ in place of . to get full path
-echo "Searching for files that match '$commonPhrase'"
-echo "..."
-
-
+#echo "Searching for files that match '$commonPhrase'"
+#echo "..."
 
 
 
@@ -31,33 +25,209 @@ echo "..."
 # search for specefic files
 # find -type f -name '*.JG*' -print0 | xargs -0 -I {} echo '{}' > files.txt
 # Search for all directories recursively
+if [[ $# -lt 1 ]] #|| [[ $@ = -*h* ]] || [[ $@ = *help* ]]
+then
+	echo "Usage:"
+	echo "seqren [OPTIONS].. [DIR]..."
+	echo "Options:"
+	echo "-a	All Option - files will be included in one singular count and will be put in the output directory"
+	echo "-h	Help - print options"
+	echo "-k	Keep Originals - Uses cp instead of mv"
+	echo "-o	Output Directory - Sets output directory to next argument"
+	echo "-r	Recursive - renames files in all subdirectories (no files in current directory will be renamed unless current directory is used as input" 
+	exit
+fi
+
+
+
+echo "Rename sequential files!"
+echo "You will choose the file type, then specefic files based on a common phrase."
+echo "Important!! Please have a backup of your directory before running this script"
+echo ""
+echo "Now choose a common phrase to rename files by-"
+echo "For example you might want to choose all files in current directory that have \"GOPRO\" in the name. Leave Blank to skip common phrases. "
+echo -n "Enter common phrase (Press Enter to skip) : "
+read commonPhrase 
+echo "$commonPhrase"
+echo -n "Enter file extension : "
+read fileExtension
+echo "$fileExtension"
 
 
 # Set an output directory
 # Iterate through arguments
 # $# returns the number of arguments given
+if [[ -f "${!i}" ]]
+then
+	rm dirs.txt
+fi
 outputArgNum=0
 outputDir="."
-outputDirOption=no
+outputDirOption=false
+recursiveOption=false
+allOption=false
+keepOriginalsOption=false
+logFile=RenameLog.txt
 for ((i=1;i<=$#;i++));
 do
 	# to access the ith argument you need to use the brackets, otherwise it would compare to the loop variable i
-	if [[ ${!i} = -*o*  ]]
+	#echo "$i/$#"
+	if [[ ${!i} = -*a*  ]]
 	then
-		if [ $outputArgNum!=$i ] && [ -d "${!i}" ]
-		then
-			echo "${!i} >> dirs.txt"
-		fi
+		echo "All Option - all files will be renamed according to a single count and will be put in the output directory"
+		allOption=true
+	elif [[ ${!i} = -*k* ]]
+	then
+		echo "Keep Originals Option selected"
+		keepOriginalsOption=true
+	elif [[ ${!i} = -*o*  ]]
+	then
 		outputArgNum=$((i+1))
-		outputDir=${!outputArgNum}
-		outputDirFlag=yes
-		ls "$outputDir"
+		outputDir=${!outputArgNum/\//}
+
+		outputDirOption=true
+	elif [[ ${!i} = -*r* ]]
+	then
+		echo "Recursive Option selected"
+		recursiveOption=true
+	elif [[ "$outputArgNum" -eq "$i" ]]
+	then
+		if [[ -d "$outputDir" ]]
+		then
+			echo "Output Directory: \"$outputDir\""
+		else
+			mkdir "$outputDir"
+			echo "Created Output Directory: \"$outputDir\""
+		fi
+	else
+		if [[ -d "${!i}" ]]
+		then
+			echo $i
+			echo "${!i}" >> dirs.txt
+		else
+			echo "${!i}: Not a directory"
+		fi
 	fi
 done
 
+if [[ "recursiveOption" = true ]]
+then
+	find -type d -print0  | xargs -0 -I {} echo '{}' > dirs.txt
+fi
 
-echo "Enter file extension : "
-read fileExtension
+
+
+sed -i 's/\///g' dirs.txt #remove forward slashes from dirs.txt
+echo ""
+echo "Directories being used:"
+cat dirs.txt
+echo ""
+
+
+echo "Starting Rename..."
+infile="./dirs.txt"
+
+#get number of files to process
+num_files=0
+while IFS= read -r dir
+do
+	(( num_files+=$(ls $dir/*$commonPhrase*.$fileExtension | wc -l) ))
+done < $infile
+echo "Number of files to rename: $num_files"
+echo "Continue? (y/N)" 
+read input
+if [[ $input = y* ]] || [[ $input = Y* ]]
+then
+	#iterate through directories
+	echo ""
+else
+	rm dirs.txt
+	echo ""
+	echo "Renaming terminated."
+	exit
+fi
+echo ""
+
+total_knt=1
+date >> $logFile
+while IFS= read -r dir
+do
+	knt=1
+	files="$dir/*$commonPhrase*.$fileExtension"
+	for i in $files
+	do
+		echo $i >> files.txt
+		echo -ne "\r$total_knt: " >> RenameLog.txt
+		if [[ "$keepOriginalsOption" = true ]]
+		then
+			if [[ "$outputDirOption" = true ]] 
+			then
+				if [[ "$allOption" = true ]]
+				then
+					echo "cp $i \"$outputDir/$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					cp $i "$outputDir/$newPhrase$total_knt.$fileExtension"
+				else
+					if [[ -d "$outputDir/$dir" ]]
+					then
+						echo "Already Created: \"$outputDir/$dir\"" >> RenameLog.txt
+					else
+						mkdir "$outputDir/$dir"
+						echo "mkdir \"$outputDir/$dir\"" >> RenameLog.txt
+					fi
+					echo "cp $i \"$outputDir/$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
+					cp $i "$outputDir/$dir/$newPhrase$knt.$fileExtension"
+				fi
+			else #no output directory specified
+				if [[ "$allOption" = true ]]
+				then
+					echo "cp $i \"./$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					cp $i "./$newPhrase$total_knt.$fileExtension"
+				else
+					echo "cp $i \"$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
+					cp $i "$dir/$newPhrase$knt.$fileExtension"
+				fi
+			fi
+		else
+			if [[ "$outputDirOption" = true ]] 
+			then
+				if [[ "$allOption" = true ]]
+				then
+					echo "mv $i \"$outputDir/$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					mv $i "$outputDir/$newPhrase$total_knt.$fileExtension"
+				else
+					echo "mv $i \"$outputDir/$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
+					mv $i "$outputDir/$dir/$newPhrase$knt.$fileExtension"
+				fi
+			else #no output directory specified
+				if [[ "$allOption" = true ]]
+				then
+					echo "mv $i \"./$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					mv $i "./$newPhrase$total_knt.$fileExtension"
+				else
+					echo "mv $i \"$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
+					mv $i "$dir/$newPhrase$knt.$fileExtension"
+				fi
+			fi
+		fi
+		#cp $i "$k/$newPhrase$knt.$fileExtension"
+		echo -ne "\r($total_knt/$num_files)"
+		total_knt=$((total_knt+1))
+		knt=$((knt+1))
+	done
+done < $infile
+
+echo -e "\nDone. \nA log of all renames are in $logFile"
+
+date >> $logFile
+echo -e "\n\n\n" >> $logFile
+rm dirs.txt
+exit
+
+
+
+
+
+
 echo "Enter new phrase (Press enter to skip) :"
 read newPhrase
 
@@ -68,13 +238,6 @@ exit
 if [[ $outputDirOption="yes" ]]
 then
 	# check for existence of provided output directory- if not, create one
-	if [[ -d "$outputDir" ]]
-	then
-		echo "Output Direcotory: \"$outputDir\""
-	else
-		mkdir "$outputDir"
-		echo "Created Output Directory: \"$outputDir\""
-	fi
 fi
 
 
@@ -83,15 +246,10 @@ fi
 
 
 
-recursiveOption=no
-if [[ $@ = -*r* ]]
-then
-	recursiveOption=yes
-	find -type d -print0 | xargs -0 -I {} echo '{}' > dirs.txt
 	infile="./dirs.txt"
-	while IFS= read -r line
+	while IFS= read -r dir
 	do
-		ls -l "$line"
+		ls -l "$dir"
 	done < $infile
 fi
 
@@ -99,20 +257,6 @@ if [[ $@ = -*c* ]]
 then
 	echo "Using current directory option"
 fi
-if [[ $# -lt 1 ]]
-then
-	echo "Usage:"
-	echo "./seqren.sh [OPTIONS].. [DIR]..."
-	echo "For current directory, \"./seqren.sh .\"" 
-	echo "Options:"
-	echo "	-c	Moves all files to current directory"
-	echo "	-r	Recursively renames files in subdirectories"
-	exit
-fi
-echo "Rename sequential files!"
-echo "You will choose the file type, then specefic files based on a common phrase."
-echo "Important!! Please have a backup of your directory before running this script"
-echo ""
 echo ""
 echo "You have chosen the following directories : "
 echo "$@"
@@ -156,29 +300,11 @@ done
 exit
 # there's a differece between [[ and [ 
 # apperently the first is better and the second can only hold 4 arguments
-if [[ $input = y* ]]
-then
-	#iterate through directories
-	for k in $@ 
-	do
-		knt=1
-		files="$k/*$commonPhrase*.$fileExtension"
-		for i in $files
-		do
-			echo "Processing file $i"
-			echo "Renaming $i to $newPhrase$knt.$fileExtension"
-			mv $i "$k/$newPhrase$knt.$fileExtension"
-			echo "($knt/$num_files) Completed"
-			knt=$((knt+1))
-		done
-	done
-	echo ""
-	echo "Renaming Complete."
-else
-	echo ""
-	echo "Renaming terminated."
-fi
 
+
+
+
+######SCRAP#####
 #STR="birthday-091216-pics"
 #SUBSTR=$(echo $STR | cut -d'-' -f 2 )
 #echo $SUBSTR
@@ -187,3 +313,7 @@ fi
 #	echo "One for file number $i"
 #done
 
+
+		#if [[ $outputArgNum!=$i ]] # && [ -d "${!i}" ] #check if directory exists
+		#then
+		#fi
