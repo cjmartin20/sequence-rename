@@ -1,4 +1,4 @@
-! /bin/bash
+#! /bin/bash
 
 #print help list
 if [[ $# -lt 1 ]] #|| [[ $@ = -*h* ]] || [[ $@ = *help* ]]
@@ -95,7 +95,7 @@ done
 # -print0 with find prints full file name on standard output, followed by a null character  (with xorgs, you can use the -0 flag to input data in this manner)
 # Linux file names can contain spaces and newline characters causing problems, print0 and -0 helps make the output usable to programs that in using file
 # When further manipulation of the  
-if [[ "recursiveOption" = true ]] #include all directories/subdirectories in current directory to search for files to rename
+if [[ "$recursiveOption" = true ]] #include all directories/subdirectories in current directory to search for files to rename
 then
 	find -type d -print0  | xargs -0 -I {} echo '{}' > dirs.txt
 fi
@@ -187,7 +187,7 @@ do
 					mv $i "./$newPhrase$total_knt.$fileExtension"
 				else
 					echo "mv $i \"$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
-					mv $i "$dir/$newPhrase$knt.$fileExtension"
+					mv "$i" "$dir/$newPhrase$knt.$fileExtension"
 				fi
 			fi
 		fi
