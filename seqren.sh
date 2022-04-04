@@ -142,12 +142,12 @@ do
 		echo -ne "\r$total_knt: " >> RenameLog.txt
 		if [[ "$keepOriginalsOption" = true ]] #uses cp instead of mv
 		then
-			if [[ "$outputDirOption" = true ]] 
+			if [[ "$outputDirOption" = true ]] #an output directory has been specified
 			then
-				if [[ "$allOption" = true ]]
+				if [[ "$allOption" = true ]] #all files from multiple directories will be counted and output into a single directory
 				then
-					echo "cp $i \"$outputDir/$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
-					cp $i "$outputDir/$newPhrase$total_knt.$fileExtension"
+					echo "cp "$i" \"$outputDir/$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					cp "$i" "$outputDir/$newPhrase$total_knt.$fileExtension"
 				else
 					if [[ -d "$outputDir/$dir" ]]
 					then
@@ -156,17 +156,17 @@ do
 						mkdir "$outputDir/$dir"
 						echo "mkdir \"$outputDir/$dir\"" >> RenameLog.txt
 					fi
-					echo "cp $i \"$outputDir/$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
-					cp $i "$outputDir/$dir/$newPhrase$knt.$fileExtension"
+					echo "cp "$i" \"$outputDir/$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
+					cp "$i" "$outputDir/$dir/$newPhrase$knt.$fileExtension"
 				fi
 			else #no output directory specified
 				if [[ "$allOption" = true ]]
 				then
-					echo "cp $i \"./$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
-					cp $i "./$newPhrase$total_knt.$fileExtension"
+					echo "cp "$i" \"./$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					cp "$i" "./$newPhrase$total_knt.$fileExtension"
 				else
-					echo "cp $i \"$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
-					cp $i "$dir/$newPhrase$knt.$fileExtension"
+					echo "cp "$i" \"$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
+					cp "$i" "$dir/$newPhrase$knt.$fileExtension"
 				fi
 			fi
 		else #uses move instead of cp
@@ -174,19 +174,19 @@ do
 			then
 				if [[ "$allOption" = true ]]
 				then
-					echo "mv $i \"$outputDir/$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
-					mv $i "$outputDir/$newPhrase$total_knt.$fileExtension"
+					echo "mv "$i" \"$outputDir/$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					mv "$i" "$outputDir/$newPhrase$total_knt.$fileExtension"
 				else
 					echo "mv $i \"$outputDir/$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
-					mv $i "$outputDir/$dir/$newPhrase$knt.$fileExtension"
+					mv "$i" "$outputDir/$dir/$newPhrase$knt.$fileExtension"
 				fi
 			else #no output directory specified
 				if [[ "$allOption" = true ]]
 				then
-					echo "mv $i \"./$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
+					echo "mv "$i" \"./$newPhrase$total_knt.$fileExtension\"" >> RenameLog.txt
 					mv $i "./$newPhrase$total_knt.$fileExtension"
 				else
-					echo "mv $i \"$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
+					echo "mv "$i" \"$dir/$newPhrase$knt.$fileExtension\"" >> RenameLog.txt
 					mv "$i" "$dir/$newPhrase$knt.$fileExtension"
 				fi
 			fi
