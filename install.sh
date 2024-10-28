@@ -1,6 +1,6 @@
 
-mkdir /opt/Sequence\ Rename
-cp ./seqren.s /opt/Sequence\ Rename/
+sudo mkdir /opt/Sequence\ Rename
+sudo cp ./seqren.sh /opt/Sequence\ Rename/
 echo "alias seqren='/opt/Sequence Rename/seqren.sh'" >> ~/.bashrc
 echo "Script is located at \"opt/Sequence Rename/seqren.sh\""
 echo "~/.bashrc updated"
