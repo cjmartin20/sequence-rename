@@ -28,6 +28,7 @@ echo -n "Enter file extension : "
 read fileExtension
 echo "$fileExtension"
 
+
 # Set an output directory
 # Iterate through arguments
 # $# returns the number of arguments given
